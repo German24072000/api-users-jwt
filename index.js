@@ -33,7 +33,7 @@ app.post('/register', async (req, res) => {
   const { user, password } = req.body;
   //check si ya existe el usuario
   const existingUser = await User.findOne({ user });
-  if (existingUser) return res.status(400).json({ status: 'error', response: 'User already exists' });
+  if (existingUser) return res.status(400).json({ status: 'error', result: 'User already exists' });
 
   //encripta la contraseña
   const hash = await bcrypt.hash(password, 10);
@@ -41,7 +41,7 @@ app.post('/register', async (req, res) => {
   //Crea el usuario y la guarda en base de datos
   const newUser = new User({ user, password: hash });
   await newUser.save();
-  res.json({ status: 'ok', response: 'User registered' });
+  res.json({ status: 'ok', result: 'User registered' });
 });
 
 // Ruta de Login
@@ -51,17 +51,17 @@ app.post('/login', async (req, res) => {
   const userLogginI = await User.findOne({ user });
 
   //Si el usuario que se logea no existe envia mensaje de error la respuesta
-  if (!userLogginI) return res.status(400).json({ status: 'error', response: 'Incorrect credentials' });
+  if (!userLogginI) return res.status(400).json({ status: 'error', result: 'Incorrect credentials' });
 
   //devuelve true si la contraseña introducida que se cifra,
   //coincide con la contraseña cifrada de bd
   const isValid = await bcrypt.compare(password, userLogginI.password);
   //Si no coinciden contraseña incorrecta
-  if (!isValid) return res.status(400).json({ status: 'error', response: 'Incorrect credentials' });
+  if (!isValid) return res.status(400).json({ status: 'error', result: 'Incorrect credentials' });
 
   //genera un token y lo devuelve
   const token = jwt.sign({ id: userLogginI._id, user: userLogginI.user }, JWT_SECRET, { expiresIn: '1h' });
-  res.json({ status: 'ok', response: token });
+  res.json({ status: 'ok', result: token });
 });
 
 // Middleware para verificar token
