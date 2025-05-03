@@ -41,6 +41,11 @@ const Patients = mongoose.model(
     dni: String,
     telephone: String,
     email: String,
+    postalCode: String,
+    gender: String,
+    dateOfBirth: String,
+    address: String,
+    token: String,
   })
 );
 
@@ -94,8 +99,7 @@ app.post("/login", async (req, res) => {
   res.json({ status: "ok", result: token });
 });
 
-app.get('/patients', async(req,res)=> {
-
+app.get("/patients", async (req, res) => {
   try {
     //keep the number of page recovered from Frontend
     const page = parseInt(req.query.page) || 1;
@@ -103,20 +107,59 @@ app.get('/patients', async(req,res)=> {
     //keep number of records to show
     const recordsPerPage = 10;
     //keep the number of the record which db search records
-    const recordsToSkip = (page -1) * recordsPerPage;
+    const recordsToSkip = (page - 1) * recordsPerPage;
 
     //.skip() -> from where it begins to search for patients in the database.
     //.limit() -> maximum number of records to show
-    const patients = await Patients.find().skip(recordsToSkip).limit(recordsPerPage);
+    const patients = await Patients.find()
+      .skip(recordsToSkip)
+      .limit(recordsPerPage);
 
     res.json(patients);
-
-  } catch(error) {
+  } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Error fetching patients' });
+    res.status(500).json({ error: "Error fetching patients" });
   }
+});
 
-})
+app.get("/patients/patient", async (req, res) => {
+  try {
+    const id = parseInt(req.query.id);
+    const patient = await Patients.findOne({ idPatient: id });
+    res.json(patient);
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching patients" });
+  }
+});
+
+app.post("/update-patient", async (req, res) => {
+  try {
+    
+    //validate field idPatient
+    if(!req.body.idPatient) {
+      return res.status(400).send({
+        message: 'error, required field',
+        fields: req.body.idPatient
+      })
+    }
+
+    const updatedPatient = await Patients.findOneAndUpdate(
+      { idPatient: req.body.idPatient },
+      req.body,
+      { new: true } //parameter to return updatedPatient
+    );
+
+    if(!updatedPatient) {
+      return res.status(404).send({ message: 'Patient not found' });
+    } else {
+      res.send(updatedPatient);
+    }
+
+  } catch (err) {
+    console.error('Error updating patient:', err);
+    res.status(500).send({ message: 'Server error' });
+  }
+});
 
 // Middleware para verificar token
 function authenticateToken(req, res, next) {
