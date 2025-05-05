@@ -132,7 +132,7 @@ app.get("/patients/patient", async (req, res) => {
   }
 });
 
-app.post("/update-patient", async (req, res) => {
+app.put("/update-patient", async (req, res) => {
   try {
     
     //validate field idPatient
@@ -160,6 +160,29 @@ app.post("/update-patient", async (req, res) => {
     res.status(500).send({ message: 'Server error' });
   }
 });
+
+app.delete("/delete-patient/:idPatient", async(req,res) => {
+
+  const { idPatient } = req.params;
+
+  try {
+    const result = await Patients.deleteOne({ idPatient: idPatient });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ status: "error", result: "Patient not found" });
+    }
+
+    return res.json({ status: "ok", result: "Successfully deleted patient" });
+
+  } catch(err) {
+    return res
+      .status(500)
+      .json({ status: "error", result: "Error deleting patient" });
+  }
+
+  // const id = parseInt(req.body.idPatient)
+  // const idFromDB = Patients.findByIdAndDelete(req.body.idPatient, function(err, do))
+})
 
 // Middleware para verificar token
 function authenticateToken(req, res, next) {
