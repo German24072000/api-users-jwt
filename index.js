@@ -49,6 +49,28 @@ const Patients = mongoose.model(
   })
 );
 
+const CounterSchema = new mongoose.Schema({
+  name: String,
+  value: Number
+})
+
+const Counter = mongoose.model('Counter', CounterSchema)
+
+//Initialitze counter if not exists
+Counter.findOne({name:'idPatient'}).then(counter => {
+  if(!counter) {
+    Counter.create({name:'idPatient', value: 0})
+  }
+})
+
+async function getNextId() {
+  const counter = await Counter.findOneAndUpdate({name:'idPatient'},
+    {$inc: {value:1}},
+    {new: true}
+  )
+  return counter.value
+}
+
 // Ruta para registrar usuarios
 app.post("/register", async (req, res) => {
   //recibe user y password
@@ -183,6 +205,46 @@ app.delete("/delete-patient/:idPatient", async(req,res) => {
   // const id = parseInt(req.body.idPatient)
   // const idFromDB = Patients.findByIdAndDelete(req.body.idPatient, function(err, do))
 })
+
+app.post('/patients/add-patient', async (req,res) => {
+  const {name,
+    dni,
+    telephone,
+    email,
+    postalCode,
+    gender,
+    dateOfBirth,
+    address} = req.body;
+
+    if(!name) {
+      return res.status(400).json({ error: 'Name is required' });
+    } else if(!dni) {
+      return res.status(400).json({ error: 'DNI is required' });
+    } else if(!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    try {
+      const idPatient = await getNextId();
+      const newPatient = new Patients({ idPatient,
+        name,
+        dni,
+        telephone,
+        email,
+        postalCode,
+        gender,
+        dateOfBirth,
+        address });
+      await newPatient.save();
+      res.status(201).json(newPatient);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+
+
+})
+
+
 
 // Middleware para verificar token
 function authenticateToken(req, res, next) {
